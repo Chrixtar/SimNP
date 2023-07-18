@@ -1,0 +1,5 @@
+_import_: 
+  detector: options/architectures/detectors/sym_embedding_prior_mask_rays.yaml
+
+kp:
+  num: 512
