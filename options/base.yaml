@@ -1,0 +1,51 @@
+seed: 0
+gpu: 0
+cpu: false
+load:
+profile: false
+devices: 1
+    
+data:
+    dataset_root_path: /BS/wewer/work/datasets/rendered
+    data_split_path: data_splits
+    dataset:
+    preload: false # true
+    augment: false
+        # crop_scale:
+        # brightness: # 0.2
+        # contrast: # 0.2
+        # saturation: # 0.2
+        # hue: # 0.5
+    train_sub:
+    val_sub:
+
+optim:
+    lr: 1.e-3
+    algo: Adam
+    sched: {}
+        # type: StepLR
+        # steps:
+        # gamma: 0.1
+
+output_root: output
+
+clean_up_checkpoints: false
+
+vis:
+    kp:
+        min_opacity: 0.5
+        cmap: hsv 
+        size: 2
+    attn:
+        point_size: 0.01
+    gt_pc:
+        samples: 128
+    emb_weights:
+        cmap: inferno
+
+tb:
+    num_instances: 2
+    num_views: 2
+    train:      # Deactivate too expensive visualizations
+        kp_pos_pc: false
+        attn_pc_gray: false

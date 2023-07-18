@@ -1,0 +1,14 @@
+network: MLP
+kwargs:
+  k: 8
+  r: 2
+  max_shading_pts: 50
+  ray_subsamples: 128
+  n_freqs: 10
+  freq_mult: 1
+  out_dim: 256
+  layers: [256, 256, 256, 256]
+  activation: LeakyReLU
+  layer_norm: false
+  detach_points: false
+  norm_displacements: false

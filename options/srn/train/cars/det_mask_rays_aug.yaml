@@ -1,0 +1,60 @@
+_parent_: options/srn/train/cars/base.yaml
+
+_import_:
+    model: options/architectures/emb_detector_prior_mask_rays.yaml
+
+# load: /BS/wewer/work/KP-CNN/output/srn/cars/detector/20221201-181225
+# resume: false # true
+
+data:
+    cat: cars   # cars / chairs
+    preload: true
+    use_gt_scale: false
+    use_gt_offset: true
+    train:
+        split: train
+        blacklist: false
+        view_slices:
+            - [0, 50]
+        augmentations:
+            - {name: ColorJitter, saturation: 0.5, hue: 0.5}
+            - {name: RandomGrayscale, p: 0.2}
+    val:
+        split: test
+        blacklist: false
+        view_slices:
+            - [64, 65]
+
+optim:
+    monitor: val/loss/all   # for checkpointing
+    early_stopping:
+        monitor: val/loss/all
+        patience: 50
+
+loss_weight:
+    kp_chamfer_3d: 1
+    kp_prior: 1
+    prior_chamfer_3d: 0
+    val:
+        prior_chamfer_3d: 1
+
+train_batch_size: 64
+vis_batch_size: 64
+train_view_size: 2
+vis_view_size: 2
+
+max_epoch: 500
+
+freq:
+    scalar: 500 # iterations
+    vis: 1000 # iterations
+    eval_ep: 1
+    ckpt_ep: 1 # epochs
+
+vis:
+    num_batches: 1
+
+metrics:
+    test: null
+    val: null
+    train: null

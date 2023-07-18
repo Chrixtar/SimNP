@@ -1,0 +1,10 @@
+network: SymEmbedding
+kwargs:
+  n_emb: 128
+  a_dim: 32
+  a_heads: 1
+  use_ids_as_queries: false
+  query_mlp: null
+  out_mlp: null
+  activation: ReLU
+  layer_norm: false

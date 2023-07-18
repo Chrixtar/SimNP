@@ -1,0 +1,6 @@
+voxel_size: !!python/tuple [0.075, 0.075, 0.075]
+voxel_scale: !!python/tuple [2, 2, 2]
+kernel_size: !!python/tuple [3, 3, 3]
+max_points_per_voxel: 8
+max_occ_voxels_per_example: 5000
+ranges: !!python/tuple [-1.0, -1.0, -1.0, 1.0, 1.0, 1.0]

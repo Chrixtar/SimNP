@@ -1,0 +1,12 @@
+network: SymEmbedding
+kwargs:
+  emb_dim: 512
+  decoder:
+    dims: [256, 128, 64]
+  gpu: true
+  prior:
+    network: ResNet
+    kwargs:
+      segmentation_mask: true
+      network: resnet18
+      pretrained: true

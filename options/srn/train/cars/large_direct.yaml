@@ -1,0 +1,46 @@
+_parent_: options/srn/train/cars/base.yaml
+
+_import_:
+    model: options/architectures/large_direct.yaml
+
+load: /BS/wewer/work/KP-CNN/output/srn/cars/train/emb_detector_prior_mask_rays_aug/20230216-221855
+resume: false
+
+data:
+    cat: cars
+    preload: false # true
+    use_gt_scale: false
+    use_gt_offset: true
+    train:
+        blacklist: false
+        view_slices:
+            - [0, 50]
+    val: null
+
+rendering:
+    ray_subsamples: 1024    # 0 for no subsampling
+    randomize_depth_samples: true
+
+model:
+    field:
+        aggregator:
+            kwargs:
+                ray_subsamples: 128
+
+use_detector_cache: true
+
+loss_weight:
+    img:
+        # l1: 1
+        mse: 1
+    # mask: 1
+
+train_batch_size: 8
+vis_batch_size: 1
+train_view_size: 5
+vis_view_size: 1
+
+max_epoch: 300
+
+vis:
+    num_batches: 4

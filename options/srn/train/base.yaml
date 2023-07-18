@@ -1,0 +1,21 @@
+_parent_: options/srn/base.yaml
+group: train
+
+freq:
+    scalar: 1000 # iterations
+    vis: 5000 # iterations
+    eval_ep: 5 # epochs
+    eval_interval: 1. # epoch fraction
+    ckpt_ep: 1 # epochs
+
+vis:
+    num_batches: 4
+
+metrics:
+    val:
+        eval_per_view: false
+        PeakSignalNoiseRatio: &psnr
+            data_range: 1
+    train:
+        eval_per_view: false
+        PeakSignalNoiseRatio: *psnr

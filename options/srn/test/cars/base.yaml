@@ -1,0 +1,4 @@
+_parent_: options/srn/train/base.yaml
+
+data:
+  cam_dist: 1.3

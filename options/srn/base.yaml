@@ -1,0 +1,57 @@
+_parent_: options/base.yaml
+
+sizes:
+    render: 128
+    image: 128
+    vis: 256
+    dump: 128
+        
+data:
+    dataset: SRN
+    preload_workers: 8
+    dataloader_workers: 4
+    preload: false # true
+    white_back: true
+
+rendering:
+    cube_scale: 1.0
+    ray_limits: null       # Do not use: pixelNeRF: [0.8, 1.8] for cars; [1.25, 2.75] for chairs
+    ray_subsamples: 1024    # 0 for no subsampling
+
+optim:
+    lr: 1.e-3
+    algo: Adam
+    monitor: null
+    sched: {}
+        # type: StepLR
+        # steps:
+        # gamma: 0.1
+
+clean_up_checkpoints: false
+
+explicitor: null
+
+metrics:
+    test:
+        eval_per_view: true
+        # ChamferDistance:
+        #     icp_iter: 0
+        StructuralSimilarityIndexMeasure: &ssim
+            gaussian_kernel: false
+            data_range: 1
+        PeakSignalNoiseRatio: &psnr
+            data_range: 1
+            dim: [1, 2, 3]
+        LearnedPerceptualImagePatchSimilarity: &lpips
+            net_type: vgg
+            normalize: true
+    val:
+        eval_per_view: false
+        # StructuralSimilarityIndexMeasure: *ssim
+        PeakSignalNoiseRatio: *psnr
+        # LearnedPerceptualImagePatchSimilarity: *lpips
+    train:
+        eval_per_view: false
+        PeakSignalNoiseRatio:
+            data_range: 1
+            dim: [1, 2]

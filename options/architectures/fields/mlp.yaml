@@ -1,0 +1,12 @@
+_import_:
+  aggregator: options/architectures/fields/aggregators/mlp.yaml
+
+network: MLP
+nerf: true
+kwargs:
+  feat_freqs: 0
+  dir_freqs: 8
+  channel_layers: [256, 256, 256, 256]
+  shape_layers: [256]
+  activation: LeakyReLU
+  layer_norm: false

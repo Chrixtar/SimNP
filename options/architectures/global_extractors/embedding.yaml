@@ -1,0 +1,4 @@
+network: Embedding
+kwargs:
+  out_dim: 512
+  gpu: true

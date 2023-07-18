@@ -1,0 +1,7 @@
+network: NeuSRenderer
+kwargs:
+  depth_resolution: 128
+  disparity_space_sampling: false
+  init_var: 0.3
+  perturb: false
+  anneal_end: 100000

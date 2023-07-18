@@ -1,0 +1,73 @@
+_parent_: options/srn/base.yaml
+group: test
+
+data:
+    preload: true
+    use_gt_scale: false
+    use_gt_offset: true
+    train:
+        split: test
+        blacklist: false
+        dataloader_workers: 0
+        repetitions_per_epoch: 100
+        view_slices:
+            - [64, 65]
+    val: null
+
+freeze:
+    kp_ids: true
+    detector: true
+    extractor: true
+    res_extractor: true
+    field: true
+
+rendering:
+    ray_subsamples: 1024    # 0 for no subsampling
+    randomize_depth_samples: true
+
+model:
+    field:
+        aggregator:
+            kwargs:
+                ray_subsamples: 128
+
+loss_schedule:
+    kp_chamfer_3d: &kp_schedule [0, 20]
+    kp_chamfer_2d: *kp_schedule
+    kp_silhouettes: *kp_schedule
+    kp_prior: *kp_schedule
+    kp_prior_latent: [0, 5]
+    # img: [20, 120]
+    # kp_separation: *kp_schedule
+    kp_depth: &depth_schedule [10, 20]
+    kp_back_depth: *depth_schedule
+    kp_depth_chamfer_3d: *depth_schedule
+    # kp_surface: *kp_schedule
+
+freq:
+    scalar: 500 # iterations
+    vis: 1000 # iterations
+    eval_ep: 50 # epochs
+    eval_interval: 1.0 # epoch fraction
+    ckpt_ep: 1 # epochs
+
+vis:
+    num_batches: 1
+
+metrics:
+    # val:
+    #     eval_per_view: false
+    #     PeakSignalNoiseRatio: &psnr
+    #         data_range: 1
+    train:
+        eval_per_view: false
+        PeakSignalNoiseRatio: # *psnr
+            data_range: 1
+
+train_batch_size: 32
+vis_batch_size: 1
+train_view_size: 1
+vis_view_size: 1
+
+
+max_epoch: 120

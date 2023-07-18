@@ -1,0 +1,14 @@
+_parent_: options/srn/test/cars/base.yaml
+
+_import_:
+    model: options/architectures/large_direct.yaml
+
+load: /BS/wewer/work/KP-CNN/output/srn/cars/train/point_nerf_sym_emb_large_direct/20230217-164220
+resume: false
+
+loss_weight:
+    img:
+        mse: 1
+    kp_chamfer_2d: 1
+    kp_prior: 1
+

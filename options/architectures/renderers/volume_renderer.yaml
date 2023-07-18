@@ -1,0 +1,4 @@
+network: VolumeRenderer
+kwargs:
+  depth_resolution: 128
+  disparity_space_sampling: false
