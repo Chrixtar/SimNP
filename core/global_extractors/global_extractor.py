@@ -1,10 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Union
 
 from torch import Tensor
 from torch.nn import Module
-
-from utils.flex_embedding import FlexEmbedding
 
 
 class GlobalExtractor(Module, ABC):
@@ -33,14 +30,6 @@ class GlobalExtractor(Module, ABC):
             idx: [n]
         """
         raise NotImplementedError()
-
-    @staticmethod
-    def access_cpu_or_gpu_emb(emb: Union[FlexEmbedding, List[FlexEmbedding]], idx: Tensor, gpu: bool):
-        device = idx.device
-        if not gpu:
-            emb = emb[0]
-            idx = idx.cpu()
-        return emb(idx).to(device=device)
 
     @abstractmethod
     def forward(

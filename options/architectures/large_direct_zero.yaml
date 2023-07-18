@@ -1,0 +1,12 @@
+_import_: 
+  detector: options/architectures/detectors/sym_embedding_prior_mask_rays.yaml
+  extractor: options/architectures/extractors/sym_embedding_large_direct_zero.yaml
+  voxel_grid: options/architectures/voxel_grid/default.yaml
+  field: options/architectures/fields/mlp.yaml
+  renderer: options/architectures/renderers/volume_renderer.yaml
+
+kp:
+  num: 512
+  id_dim: 64
+  feat_dim: 32
+  use_id_as_feat: true

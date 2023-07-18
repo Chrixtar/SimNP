@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple
 
 from easydict import EasyDict as edict
 import torch
 from torch import Tensor
-from torch.nn import Module, Parameter
+from torch.nn import Module
 import torch.nn.functional as F
 
 from . import priors
-from utils.flex_embedding import FlexEmbedding
+from utils.pinned_embedding import PinnedEmbedding
 
 
 class Detector(Module, ABC):
@@ -44,37 +44,17 @@ class Detector(Module, ABC):
         else:
             self.prior = None
         self.has_scale_emb = scale_emb
-        self.scale_emb_gpu = scale_emb_gpu
         if self.has_scale_emb:
-            self.init_scale_emb()
+            self.scale_emb = PinnedEmbedding(self.n_obj, 1, scale_emb_gpu, flex=True)
         self.has_offset_emb = offset_emb
-        self.offset_emb_gpu = offset_emb_gpu
         if self.has_offset_emb:
-            self.init_offset_emb()
+            self.offset_emb = PinnedEmbedding(self.n_obj, 3, offset_emb_gpu, flex=True)
         if self.use_cache:
             self.register_buffer("cache_mask", torch.zeros(n_obj, dtype=torch.bool), persistent=False)
             self.register_buffer("pos_cache", torch.empty((n_obj, n_keypoints, 3)), persistent=False)
             if self.predict_lrf:
                 self.register_buffer("rot_cache", torch.empty((n_obj, n_keypoints, 4)), persistent=False)
                 self.register_buffer("mir_cache", torch.empty((n_obj, n_keypoints, 1)), persistent=False)
-
-    def init_scale_emb(self):
-        emb = FlexEmbedding(self.n_obj, 1)
-        emb.weight = Parameter(torch.ones_like(emb.weight))
-        self.scale_emb = emb if self.scale_emb_gpu else [emb]   # hack to keep the Embedding on cpu despite of Pytorch-Lightning moving everything to GPUs
-
-    def init_offset_emb(self):
-        emb = FlexEmbedding(self.n_obj, 3)
-        emb.weight = Parameter(torch.zeros_like(emb.weight))
-        self.offset_emb = emb if self.offset_emb_gpu else [emb]   # hack to keep the Embedding on cpu despite of Pytorch-Lightning moving everything to GPUs
-
-    @staticmethod
-    def access_cpu_or_gpu_emb(emb: Union[FlexEmbedding, List[FlexEmbedding]], idx: Tensor, gpu: bool):
-        device = idx.device
-        if not gpu:
-            emb = emb[0]
-            idx = idx.cpu()
-        return emb(idx).to(device=device)
 
     def interpolate(self, idx: Tensor, num_steps: int) -> None:
         """
@@ -263,9 +243,9 @@ class Detector(Module, ABC):
         else:
             kp_pos = kp_rot = kp_mir = None
         if apply_scale and self.has_scale_emb and scale is None:
-            scale = self.access_cpu_or_gpu_emb(self.scale_emb, idx, self.scale_emb_gpu) # [B, 1]
+            scale = self.scale_emb(idx) # [B, 1]
         if apply_offset and self.has_offset_emb and offset is None:
-            offset = self.access_cpu_or_gpu_emb(self.offset_emb, idx, self.offset_emb_gpu)  # [B, 3]
+            offset = self.offset_emb(idx)  # [B, 3]
         if return_kp_pos:
             if is_cached:
                 res["canonical_kp_pos"], kp_rot, kp_mir = self.get_cached(idx)
@@ -301,22 +281,3 @@ class Detector(Module, ABC):
                 res["prior_kp_rot"] = kp_rot[-B*num_views:].view(B, num_views, self.n_keypoints, 4)
                 res["prior_kp_mir"] = kp_mir[-B*num_views:].view(B, num_views, self.n_keypoints, 1)
         return res
-
-    # Ensures saving and loading embedding despite of hack for keeping it on CPU
-    def get_extra_state(self):
-        res = {}
-        if self.has_scale_emb:
-            emb = self.scale_emb if self.scale_emb_gpu else self.scale_emb[0]
-            res["scale_emb"] = emb.get_extra_state()
-        if self.has_offset_emb:
-            emb = self.offset_emb if self.offset_emb_gpu else self.offset_emb[0]
-            res["offset_emb"] = emb.get_extra_state()
-        return res
-    
-    def set_extra_state(self, state):
-        if self.has_scale_emb and state is not None and "scale_emb" in state:
-            emb = self.scale_emb if self.scale_emb_gpu else self.scale_emb[0]
-            emb.set_extra_state(state["scale_emb"])
-        if self.has_offset_emb and state is not None and "offset_emb" in state:
-            emb = self.offset_emb if self.offset_emb_gpu else self.offset_emb[0]
-            emb.set_extra_state(state["offset_emb"])

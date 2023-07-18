@@ -1,16 +1,8 @@
-import re
 import collections
-import importlib
-from itertools import groupby
 from typing import Iterable
 
 from easydict import EasyDict as edict
-from pytorch3d.renderer.cameras import CamerasBase
-from pytorch3d.transforms import Transform3d
 import torch
-from torch._six import string_classes
-
-from .log import log
 
 
 def trim_tensor_dict(var, trim_size, dim=0):

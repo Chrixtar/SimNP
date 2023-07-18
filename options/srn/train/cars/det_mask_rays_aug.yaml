@@ -7,7 +7,7 @@ _import_:
 # resume: false # true
 
 data:
-    cat: cars   # cars / chairs
+    cat: cars
     preload: true
     use_gt_scale: false
     use_gt_offset: true

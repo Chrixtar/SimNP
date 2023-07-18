@@ -1,14 +1,12 @@
-from typing import Dict, List, Optional, Tuple
-import warnings
+from typing import Optional, Tuple
 
 from easydict import EasyDict as edict
 import torch
 from torch import Tensor
-from torch.nn import Parameter, init
 
 from .detector import Detector
 from utils.model import define_mlp
-from utils.flex_embedding import FlexEmbedding
+from utils.pinned_embedding import PinnedEmbedding
 
 
 class SymEmbedding(Detector):
@@ -50,22 +48,13 @@ class SymEmbedding(Detector):
             use_cache
         )
         assert lrf_head is None or (pos_head is not None and self.predict_lrf)
-        self.gpu = gpu
-        self.init_emb()
+        self.emb = PinnedEmbedding(self.n_obj, self.hid_dim, gpu, flex=True)
         n_keypoints = self.n_keypoints
         if predict_mirror:
             n_keypoints = int(n_keypoints/2)
         self.decoder = define_mlp(d_in=self.hid_dim, d_out=(n_keypoints * (8 if self.predict_lrf else 3)) if pos_head is None else None, **decoder)
         self.pos_head = define_mlp(d_in=decoder.dims[-1], d_out=n_keypoints * 3, **pos_head) if pos_head is not None else None
         self.lrf_head = define_mlp(d_in=decoder.dims[-1], d_out=n_keypoints * 5, **lrf_head) if lrf_head is not None else None
-    
-    def init_emb(self, init_emb: Optional[Tensor] = None, std: Optional[float] = None):
-        emb = FlexEmbedding(self.n_obj, self.hid_dim)
-        self.emb = emb if self.gpu else [emb]   # hack to keep the Embedding on cpu despite of Pytorch-Lightning moving everything to GPUs
-        if init_emb is not None:
-            emb.weight = Parameter(init_emb)
-        elif std is not None:
-            init.normal_(emb.weight, std=std)
 
     def interpolate(self, idx: Tensor, num_steps: int) -> None:
         """
@@ -73,11 +62,11 @@ class SymEmbedding(Detector):
             idx: [n, 2]
         """
         n = len(idx)
-        latents = self.access_cpu_or_gpu_emb(self.emb, idx.flatten(), self.gpu).view(n, 2, -1)  # [n, 2, hid_dim]
+        latents = self.emb(idx.flatten()).view(n, 2, -1)  # [n, 2, hid_dim]
         step_weights = torch.linspace(0, 1, num_steps)[None, :, None]                           # [1, num_steps, 1]
         interpolated = (1 - step_weights) *  latents[:, :1] + step_weights * latents[:, 1:]     # [n, num_steps, hid_dim]
         self.n_obj = n * num_steps
-        self.init_emb(interpolated.flatten(0, 1))
+        self.emb.init(interpolated.flatten(0, 1))
     
     def randomize(self, idx: Tensor, num_random: int, std: float) -> None:
         """
@@ -86,7 +75,7 @@ class SymEmbedding(Detector):
         """
         n = len(idx)
         self.n_obj = n * num_random
-        self.init_emb(std=std)
+        self.emb.init(std=std)
 
     def copy_selection(self, idx: Tensor, num_copies: int) -> None:
         """
@@ -94,9 +83,9 @@ class SymEmbedding(Detector):
             idx: [n]
         """
         n = len(idx)
-        latents = self.access_cpu_or_gpu_emb(self.emb, idx, self.gpu)     # [n, hid_dim]
+        latents = self.emb(idx)     # [n, hid_dim]
         self.n_obj = n * num_copies
-        self.init_emb(latents[:, None].expand(-1, num_copies, -1).flatten(0, 1))
+        self.emb.init(latents[:, None].expand(-1, num_copies, -1).flatten(0, 1))
 
     def encode(self, idx: Tensor) -> Tensor:
         """
@@ -105,7 +94,7 @@ class SymEmbedding(Detector):
         Returns:
             latent: [B, hid_dim]
         """
-        return self.access_cpu_or_gpu_emb(self.emb, idx, self.gpu)
+        return self.emb(idx)
 
     def decode(self, latent: Tensor) -> Tuple[Tensor, Optional[Tensor]]:
         """
@@ -142,16 +131,3 @@ class SymEmbedding(Detector):
             lrf = None
         
         return pos, lrf
-    
-    # Ensures saving and loading embedding despite of hack for keeping it on CPU
-    def get_extra_state(self):
-        res = super(SymEmbedding, self).get_extra_state()
-        emb = self.emb if self.gpu else self.emb[0]
-        res["emb"] = emb.get_extra_state()
-        return res
-    
-    def set_extra_state(self, state):
-        super(SymEmbedding, self).set_extra_state(state)
-        if state is not None and "emb" in state:
-            emb = self.emb if self.gpu else self.emb[0]
-            emb.set_extra_state(state["emb"])

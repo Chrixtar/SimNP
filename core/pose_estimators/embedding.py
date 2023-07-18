@@ -3,7 +3,7 @@ import torch
 from torch.nn.functional import normalize
 
 from .pose_estimator import PoseEstimator
-from utils.flex_embedding import FlexEmbedding
+from utils.pinned_embedding import PinnedEmbedding
 
 
 class Embedding(PoseEstimator):
@@ -14,12 +14,7 @@ class Embedding(PoseEstimator):
         gpu: bool = True
     ) -> None:
         super(Embedding, self).__init__(n_obj, cam_dist)
-        self.gpu = gpu
-        self.init_emb()       # hack to keep the Embedding on cpu despite of Pytorch-Lightning moving everything to GPUs
-    
-    def init_emb(self):
-        emb = FlexEmbedding(self.n_obj, 3)
-        self.emb = emb if self.gpu else [emb]
+        self.emb = PinnedEmbedding(self.n_obj, 3, gpu, flex=True)
 
     @staticmethod
     def look_at_origin(cam_location):
@@ -47,7 +42,7 @@ class Embedding(PoseEstimator):
         Returns:
             out: [B, 4, 4]
         """
-        raw_cam_params = self.access_cpu_or_gpu_emb(self.emb, idx, self.gpu)
+        raw_cam_params = self.emb(idx)
         T = self.cam_dist * normalize(raw_cam_params)
         cam2world = self.look_at_origin(T)
         R = cam2world[:, :3, :3].transpose(-1, -2)
@@ -57,13 +52,3 @@ class Embedding(PoseEstimator):
             .unsqueeze(0).expand(extr.shape[0], -1, -1)
         extr = torch.cat((extr, hom_vec), axis=-2)
         return extr
-
-    # Ensures saving and loading embedding despite of hack for keeping it on CPU
-    def get_extra_state(self):
-        emb = self.emb if self.gpu else self.emb[0]
-        return {"emb": emb.get_extra_state()}
-    
-    def set_extra_state(self, state):
-        if state is not None and "emb" in state:
-            emb = self.emb if self.gpu else self.emb[0]
-            emb.set_extra_state(state["emb"])
