@@ -9,11 +9,14 @@ class PoseEstimator(Module, ABC):
     def __init__(
         self, 
         n_obj: int,
-        cam_dist: float
+        cam_dist: float,
+        n_repeats: int = 1
     ) -> None:
         super(PoseEstimator, self).__init__()
+        assert n_obj % n_repeats == 0, "n_repeats has to divide n_obj"
         self.n_obj = n_obj
         self.cam_dist = cam_dist
+        self.n_repeats = n_repeats
 
     @abstractmethod
     def forward(

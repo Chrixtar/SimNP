@@ -1,4 +1,5 @@
-_parent_: options/srn/train/base.yaml
+_parent_: options/srn/test/base.yaml
 
 data:
+  cat: cars
   cam_dist: 1.3

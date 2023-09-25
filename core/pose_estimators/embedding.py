@@ -4,6 +4,7 @@ from torch.nn.functional import normalize
 
 from .pose_estimator import PoseEstimator
 from utils.pinned_embedding import PinnedEmbedding
+from utils.util import equidistant_sphere
 
 
 class Embedding(PoseEstimator):
@@ -11,10 +12,17 @@ class Embedding(PoseEstimator):
         self,
         n_obj: int,
         cam_dist: float,
-        gpu: bool = True
+        n_repeats: int = 1,
+        gpu: bool = True,
+        fixed_init: bool = True
     ) -> None:
-        super(Embedding, self).__init__(n_obj, cam_dist)
+        super(Embedding, self).__init__(n_obj, cam_dist, n_repeats)
         self.emb = PinnedEmbedding(self.n_obj, 3, gpu, flex=True)
+        if fixed_init:
+            # Assumes objects to be repeated consecutively w.r.t. the index
+            weight = torch.from_numpy(equidistant_sphere(self.n_repeats, self.cam_dist)).float()    # [n_repeats, 3]
+            weight = weight.repeat(self.n_obj // self.n_repeats, 1)
+            self.emb.init(weight=weight)
 
     @staticmethod
     def look_at_origin(cam_location):

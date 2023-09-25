@@ -39,12 +39,14 @@ class Dataset(Dataset, ABC):
             setting_opt = getattr(opt.data, self.setting)
             self.split = getattr(setting_opt, "split", self.setting)
             self.subset = getattr(setting_opt, "sub", None)
+            self.n_repeats = getattr(setting_opt, "n_repeats", None)
             if hasattr(setting_opt, "augmentations"):
                 self.augmentations = self.init_augmentations(setting_opt.augmentations)
             self.depth = getattr(setting_opt, "load_depth", getattr(opt.data, "load_depth", False))
         else:
             self.split = self.setting
             self.subset = None
+            self.n_repeats = None
             self.depth = getattr(opt.data, "load_depth", False)
         
         self.cat = opt.data.cat
@@ -152,9 +154,9 @@ class Dataset(Dataset, ABC):
     def load_depth(self, path):
         if not os.path.isfile(path):
             return None
-        depth = torch.from_numpy(np.load(path)).float()
+        depth = torch.from_numpy(np.load(path)).float().unsqueeze(0)
         if depth.shape[-1] != self.opt.sizes.render:
-            depth = F.interpolate(depth[None, None], size=self.opt.sizes.render, mode="nearest-exact")[0]
+            depth = F.interpolate(depth.unsqueeze(0), size=self.opt.sizes.render, mode="nearest-exact")[0]
         return depth
 
     @abstractmethod
@@ -235,16 +237,32 @@ class Dataset(Dataset, ABC):
         view["idx"] = view_idx
         return view
 
+    def get_names(self, idx: int):
+        n_repeats = self.n_repeats if self.n_repeats is not None else 1
+        idx %= len(self.samples) * n_repeats
+        sample_idx = idx // n_repeats
+        repeat_idx = idx % n_repeats
+        sample = self.samples[sample_idx]
+        obj_name, obj_idx, views = sample
+        return f"{obj_name}_{repeat_idx}" if self.n_repeats is not None else obj_name, \
+            [v[0] for v in views] 
+
     def __getitem__(self, idx: int):
-        sample = self.samples[idx % len(self.samples)]
+        n_repeats = self.n_repeats if self.n_repeats is not None else 1
+        idx %= len(self.samples) * n_repeats
+        sample_idx = idx // n_repeats
+        repeat_idx = idx % n_repeats
+        sample = self.samples[sample_idx]
         obj_name, obj_idx, views = sample
         res = {
             "views": default_collate([self.get_view(obj_name, obj_idx, v, j) for (v, j) in views]),
             "dpc": self.pcs[obj_name, obj_idx] if hasattr(self, "pcs") else self.get_pointcloud(obj_name, obj_idx),
-            "obj_idx": obj_idx,
-            "obj_name": obj_name
+            "obj_idx": obj_idx * n_repeats + repeat_idx,
+            "obj_name": f"{obj_name}_{repeat_idx}" if self.n_repeats is not None else obj_name
         }
         return res
 
     def __len__(self):
-        return len(self.samples) * getattr(getattr(self.opt.data, self.setting), "repetitions_per_epoch", 1)
+        return len(self.samples) \
+            * getattr(getattr(self.opt.data, self.setting), "repetitions_per_epoch", 1) \
+                * (1 if self.n_repeats is None else self.n_repeats)

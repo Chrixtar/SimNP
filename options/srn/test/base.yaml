@@ -15,10 +15,10 @@ data:
     val: null
 
 freeze:
-    kp_ids: true
     detector: true
+    kp_ids: true
     extractor: true
-    res_extractor: true
+    global_extractor: true
     field: true
 
 rendering:
@@ -34,13 +34,11 @@ model:
 loss_schedule:
     kp_chamfer_3d: &kp_schedule [0, 20]
     kp_chamfer_2d: *kp_schedule
-    kp_silhouettes: *kp_schedule
     kp_prior: *kp_schedule
     kp_prior_latent: [0, 5]
     # img: [20, 120]
     # kp_separation: *kp_schedule
     kp_depth: &depth_schedule [10, 20]
-    kp_back_depth: *depth_schedule
     kp_depth_chamfer_3d: *depth_schedule
     # kp_surface: *kp_schedule
 

@@ -1,5 +1,7 @@
+import math
 from typing import Optional
 
+import numpy as np
 import torch
 from torch import Tensor
 
@@ -91,3 +93,16 @@ def sparse_batched_mask_sampling(mask: Tensor, data: Optional[Tensor] = None):
     extract_idx = (torch.arange(min_count, device=device).view(1, -1) + batch_start.view(-1, 1)).view(-1)
     res = shuffled[extract_idx].view(B, min_count, -1)
     return res
+
+def equidistant_sphere(n: int, r: float):
+    points = []
+    phi = math.pi * (3. - math.sqrt(5.))  # golden angle in radians
+    for i in range(n):
+        y = 1 - (i / (n - 1 if n > 1 else 1)) * 2  # y goes from 1 to -1
+        radius = math.sqrt(1 - y * y)  # radius at y
+        theta = phi * i  # golden angle increment
+        x = math.cos(theta) * radius
+        z = math.sin(theta) * radius
+        points.append((x, y, z))
+    xyz = r * np.asarray(points)
+    return xyz

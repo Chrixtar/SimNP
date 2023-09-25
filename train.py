@@ -25,6 +25,7 @@ if __name__ == "__main__":
     log.info("loading training data...")
     train_data = dataloader_class(opt, setting="train")
     n_obj = train_data.n_obj
+    n_repeats = train_data.n_repeats
     view_idx = {"train": train_data.view_idx}
     train_loader = train_data.setup_loader(opt.train_batch_size, getattr(opt.data.train, "dataloader_workers", opt.data.dataloader_workers), shuffle=True)
     log.info("loading validation data...")
@@ -71,10 +72,10 @@ if __name__ == "__main__":
 
     if opt.load is not None:
         ckpt = os.path.join(opt.load, "checkpoints", "last.ckpt")
-        m = Model.load_from_checkpoint(checkpoint_path=ckpt, strict=opt.resume, opt=opt, n_obj=n_obj, view_idx=view_idx)
+        m = Model.load_from_checkpoint(checkpoint_path=ckpt, strict=opt.resume, opt=opt, n_obj=n_obj, view_idx=view_idx, n_repeats=n_repeats)
     else:
         ckpt = None
-        m = Model(opt, n_obj, view_idx)
+        m = Model(opt, n_obj, view_idx, n_repeats)
     
     trainer.fit(m, train_loader, val_loader, ckpt_path=ckpt if getattr(opt, "resume", False) else None)
     if opt.clean_up_checkpoints:

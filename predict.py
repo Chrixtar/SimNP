@@ -48,6 +48,8 @@ if __name__ == "__main__":
     parser.add_argument("-dewh", "--dump_emb_weights_heat", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("-dd", "--dump_depth", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("-dm", "--dump_mask", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("-sh", "--shuffle", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("-cm", "--compute_metrics", action=argparse.BooleanOptionalAction, default=True)
     args = parser.parse_args()
 
     experiment_path = os.path.join(args.experiment, args.date)
@@ -65,7 +67,12 @@ if __name__ == "__main__":
     opt.vis_batch_size = args.batch_size
     opt.vis_view_size = 1
     # opt.data.use_gt_pc_alignment = False
-    opt.data.test = edict(split="test", blacklist=False)
+    opt.data.test = edict(
+        split = getattr(opt.data.train, "split", "train"),
+        subset = getattr(opt.data.train, "sub", None),
+        n_repeats = getattr(opt.data.train, "n_repeats", None),
+        blacklist=False
+    )
     opt.dump_vis = args.dump_vis
     opt.sizes.dump = args.resolution
     opt.skip_existing = args.skip_existing
@@ -85,7 +92,7 @@ if __name__ == "__main__":
     test_data = dataloader_class(opt, setting="test")
     n_obj = test_data.n_obj
     view_idx = {"test": test_data.view_idx}
-    test_loader = test_data.setup_loader(opt.vis_batch_size, opt.data.dataloader_workers, shuffle=False)
+    test_loader = test_data.setup_loader(opt.vis_batch_size, opt.data.dataloader_workers, shuffle=args.shuffle)
 
     trainer = pl.Trainer(
         accelerator=args.accelerator, 
@@ -95,24 +102,28 @@ if __name__ == "__main__":
 
     model_path = os.path.join(args.experiment, args.date, "checkpoints", args.checkpoint + ".ckpt")
     m = Model.load_from_checkpoint(checkpoint_path=model_path, opt=opt, n_obj=n_obj, view_idx=view_idx, strict=False)
-    res = trainer.test(m, dataloaders=test_loader)[0]
-    with open(os.path.join(experiment_path, "test_result.json"), "w") as fp:
-        json.dump(res, fp)
-    
-    metrics = {
-        "psnr": {},
-        "lpips": {},
-        "ssim": {}
-    }
-    for k, v in res.items():
-        key_split = k.split("/")
-        if key_split[1] == "metric":
-            view, metric = key_split[2:4]
-            metric_abbreviation = METRIC_ABBREVIATIONS[metric]
-            if view == "all":
-                metrics[metric_abbreviation][view] = v
-            else:
-                view_int = int(view.split("_")[1])
-                metrics[metric_abbreviation][view_int] = v
-    with open(os.path.join(experiment_path, "metrics.json"), "w") as fp:
-        json.dump(metrics, fp)
+
+    if args.compute_metrics:
+        res = trainer.test(m, dataloaders=test_loader)[0]
+        with open(os.path.join(experiment_path, "test_result.json"), "w") as fp:
+            json.dump(res, fp)
+        
+        metrics = {
+            "psnr": {},
+            "lpips": {},
+            "ssim": {}
+        }
+        for k, v in res.items():
+            key_split = k.split("/")
+            if key_split[1] == "metric":
+                view, metric = key_split[2:4]
+                metric_abbreviation = METRIC_ABBREVIATIONS[metric]
+                if view == "all":
+                    metrics[metric_abbreviation][view] = v
+                else:
+                    view_int = int(view.split("_")[1])
+                    metrics[metric_abbreviation][view_int] = v
+        with open(os.path.join(experiment_path, "metrics.json"), "w") as fp:
+            json.dump(metrics, fp)
+    else:
+        trainer.predict(m, dataloaders=test_loader, return_predictions=False)

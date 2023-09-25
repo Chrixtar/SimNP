@@ -92,7 +92,7 @@ if __name__ == "__main__":
     dataset = dataloader_class(opt, setting=args.data_setting)  # Setting train, because we want to evaluate split, on which it was trained on (test-time optimization)
     n_obj = dataset.n_obj
 
-    data_loader = dataset.setup_loader(args.batch_size, opt.data.dataloader_workers, shuffle=False)
+    data_loader = dataset.setup_loader(args.batch_size, opt.data.dataloader_workers, shuffle=True )
 
     trainer = pl.Trainer(
         accelerator=args.accelerator, 

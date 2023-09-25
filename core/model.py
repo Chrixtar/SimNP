@@ -27,7 +27,13 @@ from utils.vis import tb_image, tb_point_cloud, tb_point_cloud2, tb_attn, tb_att
 
 
 class Model(LightningModule):
-    def __init__(self, opt, n_obj: int, view_idx: Dict[str, Optional[List[int]]]):
+    def __init__(
+        self, 
+        opt, 
+        n_obj: int, 
+        view_idx: Dict[str, Optional[List[int]]],
+        n_repeats: int = 1
+    ):
         super(Model, self).__init__()
         self.opt = opt
         os.makedirs(opt.output_path, exist_ok=True)
@@ -36,7 +42,7 @@ class Model(LightningModule):
         self.detector = getattr(detectors, opt.model.detector.network)(3, opt.rendering.cube_scale, n_obj, opt.model.kp.num, predict_lrf=getattr(opt.model.kp, "lrf", False), use_cache=use_detector_cache, **opt.model.detector.kwargs)
         if getattr(opt.model, "extractor", None) is not None:
             if getattr(opt.model, "pose_estimator", None) is not None:
-                self.pose_estimator = getattr(pose_estimators, opt.model.pose_estimator.network)(n_obj, opt.data.cam_dist, **opt.model.pose_estimator.kwargs)
+                self.pose_estimator = getattr(pose_estimators, opt.model.pose_estimator.network)(n_obj, opt.data.cam_dist, n_repeats, **opt.model.pose_estimator.kwargs)
             else:
                 self.pose_estimator = None
             if getattr(opt.model, "voxel_grid", None) is not None:
@@ -653,8 +659,8 @@ class Model(LightningModule):
     def dump_exists(self, var):
         dump_dir = getattr(self.opt, "dump_dir", "dump")
         for i, o in enumerate(var.obj_name):
-            if os.path.isfile(os.path.join(self.opt.output_path, dump_dir, o, "image", "250.png")):
-                continue
+            # if os.path.isfile(os.path.join(self.opt.output_path, dump_dir, o, "image", "251.png")):
+            #     continue
             for v_t in var.views.name[i]:
                 v = v_t.item()
                 if not os.path.isfile(os.path.join(self.opt.output_path, dump_dir, o, "image", str(v) + ".png")):
@@ -727,12 +733,12 @@ class Model(LightningModule):
         if hasattr(pred, "kp_pos"):
             if not exist_tb_split_opt or getattr(tb_split_opt, "kp_pos_img", True):
                 tb_image(self.opt, self.logger.experiment, step, split, "kp_pos_img", gt.img, kp=pred.kp_pos, extr=gt.extr, intr=gt.intr, pix_scale=getattr(gt, "pix_scale", None), pix_offset=getattr(gt, "pix_offset", None), from_range=(0, 1))
-            if not exist_tb_split_opt or getattr(tb_split_opt, "pose_img", True):
-                tb_image(self.opt, self.logger.experiment, step, split, "pose_img", gt.img, kp=pred.kp_pos, extr=pred.extr, intr=gt.intr, pix_scale=getattr(gt, "pix_scale", None), pix_offset=getattr(gt, "pix_offset", None), from_range=(0, 1))
             if not exist_tb_split_opt or getattr(tb_split_opt, "kp_pos_pc_img", True):
                 tb_point_cloud(self.opt, self.logger.experiment, step, split, "kp_pos_pc_img", pred.canonical_kp_pos, gt.extr, gt.intr, pix_scale=getattr(gt, "pix_scale", None), pix_offset=getattr(gt, "pix_offset", None), gt=var.dpc.points)
             if not exist_tb_split_opt or getattr(tb_split_opt, "kp_pos_pc", True):
                 tb_point_cloud2(self.opt, self.logger.experiment, step, split, pred.canonical_kp_pos, var.dpc.points)
+            if hasattr(pred, "extr") and (not exist_tb_split_opt or getattr(tb_split_opt, "pose_img", True)):
+                tb_image(self.opt, self.logger.experiment, step, split, "pose_img", gt.img, kp=pred.kp_pos, extr=pred.extr, intr=gt.intr, pix_scale=getattr(gt, "pix_scale", None), pix_offset=getattr(gt, "pix_offset", None), from_range=(0, 1))
         if hasattr(pred, "prior_kp_pos"):
             if not exist_tb_split_opt or getattr(tb_split_opt, "kp_prior_img", True):
                 tb_image(self.opt, self.logger.experiment, step, split, "kp_prior_img", gt.img, kp=pred.prior_kp_pos, extr=gt.extr, intr=gt.intr, pix_scale=getattr(gt, "pix_scale", None), pix_offset=getattr(gt, "pix_offset", None), from_range=(0, 1))

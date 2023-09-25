@@ -67,13 +67,11 @@ class Renderer(nn.Module, ABC):
         else:
             if type(ray_start) == torch.Tensor:
                 depths = math_utils.linspace(ray_start, ray_end, self.depth_resolution).permute(1,2,0,3).contiguous()
-                depth_delta = (ray_end - ray_start) / (self.depth_resolution - 1)
             else:
                 depths = torch.linspace(ray_start, ray_end, self.depth_resolution, device=ray_start.device).reshape(1, 1, self.depth_resolution, 1).expand(N, M, 1, 1)
-                depth_delta = (ray_end - ray_start)/(self.depth_resolution - 1)
         if self.randomize_depth_samples:
-            step_size = 1/(self.depth_resolution - 1)
-            depths += torch.rand_like(depths) * step_size
+            depth_delta = (ray_end - ray_start)/(self.depth_resolution - 1)
+            depths += torch.rand_like(depths) * depth_delta.unsqueeze(-1)
         return depths
 
     @staticmethod

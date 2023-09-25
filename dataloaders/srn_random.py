@@ -57,6 +57,8 @@ class Dataset(base.Dataset):
                 i += 1
         self.list_cads = cads
         self.n_obj = i
+        if self.n_repeats is not None:
+            self.n_obj *= self.n_repeats
 
     def init_samples(self):
         samples = []

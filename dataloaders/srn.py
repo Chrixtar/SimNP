@@ -48,6 +48,8 @@ class SRN(Dataset):
                 i += 1
         self.objects = objects
         self.n_obj = i
+        if self.n_repeats is not None:
+            self.n_obj *= self.n_repeats
 
     def init_views(self):
         with open(os.path.join(self.opt.data.data_split_path, f"srn_{self.cat}_view.pkl"), "rb") as file:
