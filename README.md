@@ -41,7 +41,11 @@ conda activate simnp
 
 6. (Optional) Run training script with ```python train.py --yaml=[options_path]```.
 
-7. Run inference script with ```python predict.py --experiment [path_to_experiment_output_directory] --date [datetime_of_experiment_run]```, where an experiment is determined by a certain options file and the date is the datetime of the experiment run.
+7. Run inference script with 
+```
+python predict.py --experiment [path_to_experiment_output_directory] --date [datetime_of_experiment_run]
+```
+, where an experiment is determined by a certain options file and the date is the datetime of the experiment run.
 
 ## Citation
 ```
