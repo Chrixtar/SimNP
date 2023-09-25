@@ -1,6 +1,6 @@
 # SimNP: Learning Self-Similarity Priors Between Neural Points
 
-[![arXiv](https://img.shields.io/badge/arXiv-2207.05736-b31b1b.svg)](http://arxiv.org/abs/2309.03809)
+[![arXiv](https://img.shields.io/badge/arXiv-2309.03809-b31b1b.svg)](http://arxiv.org/abs/2309.03809)
 
 Official PyTorch implementation of the paper "SimNP: Learning Self-Similarity Priors Between Neural Points", ICCV 2023.
 
