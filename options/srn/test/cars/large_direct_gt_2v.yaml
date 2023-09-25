@@ -3,7 +3,7 @@ _parent_: options/srn/test/cars/base.yaml
 _import_:
     model: options/architectures/large_direct.yaml
 
-load: /BS/wewer/work/KP-CNN/output/srn/cars/train/point_nerf_sym_emb_large_direct/20230217-164220
+load: output/SRN/cars/train/large_direct/20230803-135824
 resume: false
 
 data:

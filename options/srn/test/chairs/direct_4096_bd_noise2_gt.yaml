@@ -1,0 +1,12 @@
+_parent_: options/srn/test/chairs/base.yaml
+
+_import_:
+    model: options/architectures/direct_4096_bd.yaml
+
+load: output/SRN/chairs/train/direct_4096_bd_noise2/20230809-150225
+resume: false
+
+loss_weight:
+    img:
+        mse: 1
+    kp_chamfer_3d: 1

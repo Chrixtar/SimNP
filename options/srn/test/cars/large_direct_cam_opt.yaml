@@ -1,0 +1,26 @@
+_parent_: options/srn/test/cars/base.yaml
+
+_import_:
+    model: options/architectures/large_direct_cam_opt.yaml
+
+load: output/SRN/cars/test/large_direct_cam_opt/20230813-165715 # output/SRN/cars/train/large_direct_cam/20230809-131333
+resume: true # false   # true
+
+data:
+    train:
+        n_repeats: 8
+
+loss_weight:
+    kp_prior: 1
+    pose: 1
+    kp_chamfer_2d: 1
+    img:
+        mse: 1
+
+loss_schedule:
+    kp_prior: [0, 30]
+    pose: [10, 20]
+    kp_chamfer_2d: [20, 30]
+    img: [20, 120]
+
+max_epoch: 200

@@ -1,28 +1,25 @@
-_parent_: options/srn/test/cars/base.yaml
+_parent_: options/srn/test/chairs/base.yaml
 
 _import_:
-    model: options/architectures/large_direct.yaml
+    model: options/architectures/direct_4096_bd.yaml
 
-load: output/SRN/cars/train/large_direct/20230803-135824
+load: output/SRN/chairs/train/direct_4096_bd_noise2/20230809-150225
 resume: false
 
 data:
-    load_depth: true
     train:
         view_slices:
             - [64, 65]
             - [104, 105]
 
-loss:
-    kp_depth:
-        gt: true
-
 loss_weight:
     img:
         mse: 1
     kp_chamfer_2d: 1
-    kp_prior: 1
-    kp_depth: 1
+    kp_prior_latent: 1
+
+loss_schedule:
+    kp_chamfer_2d: [5, 20]
 
 train_batch_size: 16
 vis_batch_size: 1

@@ -1,13 +1,13 @@
-_parent_: options/srn/train/cars/base.yaml
+_parent_: options/srn/train/chairs/base.yaml
 
 _import_:
-    model: options/architectures/large_direct.yaml
+    model: options/architectures/direct_4096_bd.yaml
 
-load: output/SRN/cars/train/det_mask_rays_aug/20230718-180508
+load: output/SRN/chairs/train/det_mask_rays_aug_big_4096/20230511-180337
 resume: false
 
 data:
-    cat: cars
+    cat: chairs
     preload: true
     use_gt_scale: false
     use_gt_offset: true
@@ -26,8 +26,12 @@ model:
         aggregator:
             kwargs:
                 ray_subsamples: 128
+                max_shading_pts: 70
 
 use_detector_cache: true
+
+kp_noise:
+    std: 0.005
 
 loss_weight:
     img:
@@ -40,7 +44,7 @@ vis_batch_size: 1
 train_view_size: 5
 vis_view_size: 1
 
-max_epoch: 300
+max_epoch: 400
 
 vis:
     num_batches: 4

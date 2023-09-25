@@ -7,22 +7,15 @@ load: output/SRN/cars/train/large_direct/20230803-135824
 resume: false
 
 data:
-    load_depth: true
     train:
         view_slices:
-            - [64, 65]
-            - [104, 105]
-
-loss:
-    kp_depth:
-        gt: true
+            - [63, 65]
 
 loss_weight:
     img:
         mse: 1
     kp_chamfer_2d: 1
     kp_prior: 1
-    kp_depth: 1
 
 train_batch_size: 16
 vis_batch_size: 1

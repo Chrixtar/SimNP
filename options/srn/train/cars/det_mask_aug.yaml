@@ -1,7 +1,7 @@
 _parent_: options/srn/train/cars/base.yaml
 
 _import_:
-    model: options/architectures/emb_detector_prior_mask_rays.yaml
+    model: options/architectures/emb_detector_prior_mask.yaml
 
 data:
     cat: cars

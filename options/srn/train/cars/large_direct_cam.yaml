@@ -1,9 +1,9 @@
 _parent_: options/srn/train/cars/base.yaml
 
 _import_:
-    model: options/architectures/large_direct.yaml
+    model: options/architectures/large_direct_cam.yaml
 
-load: output/SRN/cars/train/det_mask_rays_aug/20230718-180508
+load: output/SRN/cars/train/det_mask_aug/20230804-145547
 resume: false
 
 data:
